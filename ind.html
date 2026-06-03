@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Strength Analyzer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d1117;
+    font-family: 'Courier New', monospace;
+    color: #c9d1d9;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 28px;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  h1 {
+    font-size: 20px;
+    color: #58a6ff;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #8b949e;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .input-wrap {
+    position: relative;
+    margin-bottom: 18px;
+  }
+
+  input {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px 44px 12px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus { border-color: #58a6ff; }
+
+  .eye {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #8b949e;
+  }
+
+  .bar-track {
+    height: 6px;
+    background: #21262d;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.4s, background 0.4s;
+  }
+
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+
+  .checks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+
+  .chk {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #8b949e;
+    transition: color 0.2s;
+  }
+
+  .chk.pass { color: #3fb950; }
+  .chk.fail { color: #f85149; }
+
+  .chk-icon { font-size: 14px; width: 18px; text-align: center; }
+
+  .divider { border: none; border-top: 1px solid #21262d; margin-bottom: 18px; }
+
+  .gen-row { display: flex; gap: 8px; }
+
+  .gen-out {
+    flex: 1;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #3fb950;
+    cursor: pointer;
+    word-break: break-all;
+    transition: border-color 0.2s;
+  }
+
+  .gen-out:hover { border-color: #3fb950; }
+
+  .btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #58a6ff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .btn:hover { background: #30363d; }
+
+  .hint { font-size: 11px; color: #8b949e; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔐 PASSWORD ANALYZER</h1>
+
+  <label>Enter Password</label>
+  <div class="input-wrap">
+    <input type="password" id="pwd" placeholder="Type your password..." autocomplete="off">
+    <button class="eye" id="eyeBtn">👁️</button>
+  </div>
+
+  <div class="bar-track"><div class="bar-fill" id="bar"></div></div>
+  <div class="bar-label">
+    <span id="strengthText" style="color:#8b949e">—</span>
+    <span id="scoreText" style="color:#8b949e">0 / 100</span>
+  </div>
+
+  <div class="checks">
+    <div class="chk fail" id="c1"><span class="chk-icon">✗</span> At least 8 characters</div>
+    <div class="chk fail" id="c2"><span class="chk-icon">✗</span> Uppercase letter (A–Z)</div>
+    <div class="chk fail" id="c3"><span class="chk-icon">✗</span> Lowercase letter (a–z)</div>
+    <div class="chk fail" id="c4"><span class="chk-icon">✗</span> Number (0–9)</div>
+    <div class="chk fail" id="c5"><span class="chk-icon">✗</span> Special character (!@#$...)</div>
+  </div>
+
+  <hr class="divider">
+  <label>Generate Strong Password</label>
+  <div class="gen-row">
+    <div class="gen-out" id="genOut" title="Click to copy">Press Generate →</div>
+    <button class="btn" id="genBtn">Generate</button>
+  </div>
+  <div class="hint" id="hint"></div>
+</div>
+
+<script>
+  const pwd = document.getElementById('pwd');
+  const bar = document.getElementById('bar');
+  const strengthText = document.getElementById('strengthText');
+  const scoreText = document.getElementById('scoreText');
+  const eyeBtn = document.getElementById('eyeBtn');
+  const genOut = document.getElementById('genOut');
+  const hint = document.getElementById('hint');
+
+  const levels = [
+    { label: 'Very Weak',    color: '#f85149' },
+    { label: 'Weak',         color: '#d29922' },
+    { label: 'Fair',         color: '#e3b341' },
+    { label: 'Strong',       color: '#3fb950' },
+    { label: 'Very Strong',  color: '#58a6ff' },
+  ];
+
+  function setCheck(id, pass) {
+    const el = document.getElementById(id);
+    el.className = 'chk ' + (pass ? 'pass' : 'fail');
+    el.querySelector('.chk-icon').textContent = pass ? '✓' : '✗';
+  }
+
+  pwd.addEventListener('input', () => {
+    const v = pwd.value;
+    const checks = [
+      v.length >= 8,
+      /[A-Z]/.test(v),
+      /[a-z]/.test(v),
+      /[0-9]/.test(v),
+      /[^A-Za-z0-9]/.test(v),
+    ];
+    ['c1','c2','c3','c4','c5'].forEach((id, i) => setCheck(id, checks[i]));
+
+    const score = checks.filter(Boolean).length;
+    const pct = v.length === 0 ? 0 : (score / 5) * 100;
+    const lvl = v.length === 0 ? null : levels[score === 0 ? 0 : score - 1];
+
+    bar.style.width = pct + '%';
+    bar.style.background = lvl ? lvl.color : '#21262d';
+    strengthText.textContent = lvl ? lvl.label : '—';
+    strengthText.style.color = lvl ? lvl.color : '#8b949e';
+    scoreText.textContent = Math.round(pct) + ' / 100';
+  });
+
+  eyeBtn.addEventListener('click', () => {
+    const show = pwd.type === 'password';
+    pwd.type = show ? 'text' : 'password';
+    eyeBtn.textContent = show ? '🙈' : '👁️';
+  });
+
+  document.getElementById('genBtn').addEventListener('click', () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+    let p = 'aA1!';
+    for (let i = 4; i < 16; i++) p += chars[Math.floor(Math.random() * chars.length)];
+    p = p.split('').sort(() => Math.random() - 0.5).join('');
+    genOut.textContent = p;
+    genOut.dataset.v = p;
+    hint.textContent = '';
+  });
+
+  genOut.addEventListener('click', () => {
+    const v = genOut.dataset.v;
+    if (!v) return;
+    navigator.clipboard.writeText(v).then(() => {
+      hint.textContent = '✓ Copied to clipboard!';
+      hint.style.color = '#3fb950';
+      setTimeout(() => hint.textContent = '', 2000);
+    });
+  });
+</script>
+</body>
+</html>
